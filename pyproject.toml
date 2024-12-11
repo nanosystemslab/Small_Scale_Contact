@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "small-scale-contact"
+version = "0.1.0"
+description = "Data processing and visualization for experimental model validation to characterize approaching contact adhesion forces."
+authors = ["Matthew Nakamura <matthew.t.nakamura@gmail.com>"]
+license = "GPL-3.0-or-later"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.10"
+matplotlib = "^3.9.3"
+numpy = "^2.2.0"
+pandas = "^2.2.3"
+seaborn = "^0.13.2"
+scipy = "^1.14.1"
+scikit-learn = "^1.6.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
