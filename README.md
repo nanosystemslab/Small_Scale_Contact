@@ -68,5 +68,13 @@ python3 src/plot_model_vdw_and_contact.py -i data/Au_2024-10-24/2024-10-*txt
 ```
 3. **View Results**: Access the output files in the `out` directory and analyze the generated data.
 
+## Results
+1. Results of Adhesion Model
+![Load vs Depth (vdw only)](out/plot-Load_(µN)-vs-Depth_(nm)-vdw_only.png)
+
+2. Experimental Results
+![Multi Fit Load vs Depth](out/plot-multi_fit_var-Load_(µN)-vs-Depth_(nm).png)
+
+
 ## License
 This project is licensed under the GPL-3.0-or-later License - see the [LICENSE](LICENSE) file for details.
