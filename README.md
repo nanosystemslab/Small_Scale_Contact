@@ -9,8 +9,7 @@ Small_Scale_Contact/
 ├── LICENSE
 ├── README.md
 ├── data
-│   ├── 2024-10-24--Air_Indent_0001_DC.txt
-│   ├── Au_2024-10-24/
+│   ├── Adhesion-Experiment 
 │   ├── NI-TIP-surface/
 ├── out
 │   ├── Model/
