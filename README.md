@@ -1,5 +1,5 @@
 # Small_Scale_Contact
-
+### Code DOI: [![Zenodo-Code-DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14426972.svg)](https://doi.org/10.5281/zenodo.14426972)
 ### Data DOI: [![Zenodo-Data-DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14422143.svg)](https://doi.org/10.5281/zenodo.14422143)
 
 ## Overview
@@ -98,6 +98,24 @@ Graph represents 71 approaches to a nominally flat gold sample. The average dete
 ![Multi Fit Load vs Depth](out/plot-multi_fit_var-Load_(µN)-vs-Depth_(nm).png)
 Experimental approach data from fig. 3 is again represented in blue. A model of asperity contact loading is shown in green stars following [Bhushan1998](https://link.springer.com/article/10.1023/A:1019186601445). The van der Waals approaching contact adhesion model (w.r.t. Paper eq. 4) applied to measured surface asperity heights is shown in yellow circles. Finally, the corrected total interaction load, accounting for the early contact of outlier asperities protruding from the nanoindenter probe, is shown in red squares.
 
+### Code Citation
+
+If you use this data, please cite it using the following BibTeX entry:
+```bibtex
+@software{matthew_nakamura_2024_14426972,
+  author       = {Matthew Nakamura},
+  title        = {nanosystemslab/Small\_Scale\_Contact: Initial
+                   Release of Small Scale Contact Project Data
+                   Processing (v1.0.0)
+                  },
+  month        = dec,
+  year         = 2024,
+  publisher    = {Zenodo},
+  version      = {v1.0.0},
+  doi          = {10.5281/zenodo.14426972},
+  url          = {https://doi.org/10.5281/zenodo.14426972}
+}
+```
 
 ## License
 This project is licensed under the GPL-3.0-or-later License - see the [LICENSE](LICENSE) file for details.
