@@ -1,7 +1,3 @@
-Got it! Let's update the license information in the README file to reflect the GNU General Public License v3.0.
-
----
-
 # Small_Scale_Contact
 
 ## Overview
