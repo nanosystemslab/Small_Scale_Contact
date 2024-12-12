@@ -54,16 +54,5 @@ python3 src/plot_model_vdw_and_contact.py -i data/Au_2024-10-24/2024-10-*txt
 ```
 3. **View Results**: Access the output files in the `out` directory and analyze the generated data.
 
-## Configuration
-Modify the `config.yaml` file to adjust simulation parameters (example not provided in the directory, consider adding one if needed).
-
-## Contributing
-We welcome contributions! Please follow these steps:
-1. Fork the repository.
-2. Create a new branch (`git checkout -b feature-branch`).
-3. Make your changes and commit them (`git commit -m 'Add new feature'`).
-4. Push to the branch (`git push origin feature-branch`).
-5. Open a Pull Request.
-
 ## License
 This project is licensed under the GPL-3.0-or-later License - see the [LICENSE](LICENSE) file for details.
