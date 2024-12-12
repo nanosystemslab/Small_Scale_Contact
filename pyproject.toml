@@ -5,6 +5,7 @@ description = "Data processing and visualization for experimental model validati
 authors = ["Matthew Nakamura <matthew.t.nakamura@gmail.com>"]
 license = "GPL-3.0-or-later"
 readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
 python = ">=3.10"

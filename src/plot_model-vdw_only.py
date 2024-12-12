@@ -3,12 +3,14 @@ import glob
 import logging
 import os
 import sys
+import shutil
 import types
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pandas.plotting
 import seaborn as sns
+from scipy.signal import find_peaks, savgol_filter
 from scipy.integrate import quad
 from scipy.misc import derivative
 
@@ -93,6 +95,7 @@ def load_model_files(csv_dir):
 
     # Calculate averages and standard deviations along the file axis (rows)
     x_mean = np.mean(x_data, axis=0)
+    x_std = np.std(x_data, axis=0)
 
     y_mean = np.mean(y_data, axis=0)
     y_std = np.std(y_data, axis=0)
@@ -108,19 +111,29 @@ def plot_data_multi_trace_poly(param_y="T", param_x="T", data_paths=None):
     log = logging.getLogger(__name__)
     log.debug("in")
 
+    plot_param_options = {
+        "Depth_(nm)": {'label': "Depth", 'hi': 4, 'lo': 0, 'lbl': "Depth(nm)"},
+        "Load_(µN)": {'label': "Force", 'hi': 400, 'lo': 0, 'lbl': "Load(µN)"},
+        "Time_(s)": {'label': "Time", 'hi': 300, 'lo': 0, 'lbl': "Time (sec)"},
+        "Depth_(V)": {'label': "Depth", 'hi': 4, 'lo': 0, 'lbl': "Depth (V)"},
+        "Load_(V)": {'label': "Force", 'hi': 400, 'lo': 0, 'lbl': "Load (V)"}
+    }
+
     dfs = []
     for file in data_paths:
         print(f"loading...{file}")
         df = load_file(file)
 
-        levels_up = os.path.abspath(os.path.join(file, "../"))
+        two_levels_up = os.path.abspath(os.path.join(file, "../../"))
         keyword = 'Air_Indent'
 
         # Search for a file that contains the keyword in its name
+        file_found = False
+        # Search for a file that contains the keyword in its name
         found_file_path = None
-        for file_name in os.listdir(levels_up):
+        for file_name in os.listdir(two_levels_up):
             if keyword in file_name:
-                found_file_path = os.path.join(levels_up, file_name)
+                found_file_path = os.path.join(two_levels_up, file_name)
                 break
 
         # Print the result
@@ -130,14 +143,11 @@ def plot_data_multi_trace_poly(param_y="T", param_x="T", data_paths=None):
 
             # Assuming 'Load (µN)' is the column that needs normalization
             if 'Load_(µN)' in df.columns and 'Load_(µN)' in df_air.columns:
-                # Interpolating the Air_Indent data to match experimental
-                df_air_interpolated = df_air.reindex(df.index,
-                                                     method='nearest')
+                # Interpolating the Air_Indent data to match experimental data if needed
+                df_air_interpolated = df_air.reindex(df.index, method='nearest')
 
                 # Subtracting air indentation load from experimental load
-                df['Load_(µN)'] = (
-                    df['Load_(µN)'] - df_air_interpolated['Load_(µN)']
-                )
+                df['Load_(µN)'] = df['Load_(µN)'] - df_air_interpolated['Load_(µN)']
 
                 # Print or save the normalized dataframe
                 print(df.head())  # For testing, you can see the top few rows
@@ -160,7 +170,7 @@ def plot_data_multi_trace_poly(param_y="T", param_x="T", data_paths=None):
         print(df)
         dfs.append(df)
 
-    figsize = 4
+    figsize = 4  # 12 has been default
     figdpi = 600
     hwratio = 16. / 9
     fig = plt.figure(figsize=(figsize * hwratio, figsize), dpi=figdpi)
@@ -170,12 +180,11 @@ def plot_data_multi_trace_poly(param_y="T", param_x="T", data_paths=None):
     hold_y = []
     with sns.axes_style("darkgrid"):
         for df in dfs:
-            lab = df.meta.run
+            lab =  df.meta.run
             file = df.meta.file
-            df = df.iloc[np.linspace(0, len(df) - 1,
-                                     num=int(len(df) * 0.1), dtype=int)]
+            df = df.iloc[np.linspace(0, len(df) - 1, num=int(len(df) * 0.1), dtype=int)]
             x = df[param_x]
-            y = df[param_y]
+            y = df[param_y] #- df[param_y].iloc[-1]
             x = x.dropna()
             y = y.dropna()
 
@@ -184,6 +193,13 @@ def plot_data_multi_trace_poly(param_y="T", param_x="T", data_paths=None):
             x = x.loc[valid_index]
             y = y.loc[valid_index]
 
+            min_index = y.idxmin()
+            # Select the data from the start to the min_index
+            #x = -x
+            y = y
+            min_index = np.argmin(y)
+
+            # ax.plot(x, y)#, label=f"Experimental Trial: {df.meta.run}")
             hold_x.append(x)
             hold_y.append(y)
 
@@ -211,8 +227,7 @@ def plot_data_multi_trace_poly(param_y="T", param_x="T", data_paths=None):
         # Display the combined and interpolated DataFrame
         df_combined['Average'] = df_combined.mean(axis=1)
         df_combined['STD'] = df_combined.std(axis=1)
-        df_combined['SEM'] = (df_combined['STD'] /
-                              np.sqrt(df_combined.notna().sum(axis=1)))
+        df_combined['SEM'] = df_combined['STD'] / np.sqrt(df_combined.notna().sum(axis=1))
 
         df_combined = df_combined.iloc[::4]
         depth = df_combined.index  # Depth values (formerly 'X')
@@ -228,58 +243,59 @@ def plot_data_multi_trace_poly(param_y="T", param_x="T", data_paths=None):
                         load_average - load_std, load_average + load_std,
                         color='blue', alpha=0.2, label='Standard Deviation')
         if param_x == "Time_(s)":
-            xh = 160
+            xh = 160 # max(x)
             xl = 0
             xh = None
             xl = None
         elif param_x == "Depth_(nm)":
-            xh = 0.1
+            xh = 0.1 # max(x)
             xl = -200
         else:
             xh = None
             xl = None
 
         def model(x):
-            R = (130 * 1e-9) / 2
+            R = (130*1e-9)/2
             N = 74357
-            x = x * 1e-9
+            x = x*1e-9
             Ah = 27.2 * 10**-20
-            sigma = 13.204 * 1e-9
-
+            D = 21.456 * 1e-6
+            Area = np.pi * (D / 2)**2
+            sigma = 13.204*1e-9
+            # Define PDF function
             def PDF(x):
-                # Define PDF function
-                return ((1 / (sigma * (2 * np.pi)**0.5)) *
-                        np.exp((-1 / 2) * (x / sigma)**2))
+                return (1 / (sigma * (2 * np.pi)**0.5)) * np.exp((-1 / 2) * (x / sigma)**2)
 
             # Numerical integration for n
-            z = 200 * 1e-9
-            n_integral, _ = quad(PDF, z, np.inf)
+            z = 200*1e-9
+            n_integral, _ = quad(PDF, z, np.inf)  # Integrate PDF from z to infinity
             n = N * n_integral
 
             # Interaction energy at specific separation distance
             def W_i(x):
-                return -((1 / 6) * Ah * (R / x + R / (2 * R + x) +
-                                         np.log(x / (2 * R + x))))
+                return -((1 / 6) * Ah * (R / x + R / (2 * R + x) + np.log(x / (2 * R + x))))#*1e6#*1e18
 
             # Numerical derivative of W_i
             def dW_i(x):
                 return derivative(W_i, x, dx=1e-10)
 
             # Total energy
-            W = -(n * dW_i(x) + (N - n) * dW_i(x)) * 1e6
+            W = -(n * dW_i(x) + (N - n) * dW_i(x))*1e6
             return W
 
         # Array setup
         step = -0.1
-        x = np.arange(200, 0 - step, step)
-        W = model(abs(x))
+        x = np.arange(200, 0-step, step)
+        W= model(abs(x))
 
         def model_2(x):
-            x = x * 1e-9
+            x = x*1e-9
             Ah = 27.2 * 10**-20
             D = 21.456 * 1e-6
             Area = np.pi * (D / 2)**2
-            return -(Ah * Area) / (6 * np.pi * x**3) * 1e6
+
+            #return -(Ah * Area)/(12*np.pi*x**2)*1e12
+            return -(Ah* Area)/(6*np.pi*x**3)*1e6#*1e18
 
         W2 = model_2(abs(x))
 
@@ -288,35 +304,34 @@ def plot_data_multi_trace_poly(param_y="T", param_x="T", data_paths=None):
         marker_indices2 = np.linspace(0, len(x) - 1, 15, dtype=int)
 
         # Plot vdW Adhesion with markers and line
-        ax.plot(-1 * x, W2, label='vdW Adhesion (HS)', color='#FF1493',
-                linestyle='--', marker='d', markevery=marker_indices2)
-        ax.plot(-1 * x, W, label='vdW Adhesion ($\\sigma$)', color='purple',
-                linestyle='--', marker='^', markevery=marker_indices)
+        ax.plot(-1*x, W2, label='vdW Adhesion (HS)', color='#FF1493', linestyle='--', marker='d', markevery=marker_indices2)
+        ax.plot(-1*x, W, label='vdW Adhesion ($\sigma$)', color='purple', linestyle='--', marker='^', markevery=marker_indices)
         ax.set_xlim([xl, xh])
         ax.set_xlabel("Separation Distance ($nm$)", fontsize=14)
 
         # Customize x-axis ticks to display absolute values
         ax.set_xticks(np.linspace(-200, 0, 10))  # Define tick positions
-        ax.set_xticklabels(np.abs(ax.get_xticks()).astype(int), fontsize=14)
+        ax.set_xticklabels(np.abs(ax.get_xticks()).astype(int), fontsize=14)  # Convert to positive labels
         ax.set_ylim([-7.5, 2])
         ax.tick_params(axis='y', labelsize=14)
-        ax.set_ylabel("Load ($\\mu N$)", fontsize=14)
+        ax.set_ylabel("Load ($\mu N$)", fontsize=14)
         ax.legend(loc='lower left', fontsize=14)
-        # plt.show()
+        #plt.show()
 
         logging.info(sys._getframe().f_code.co_name)
-        plot_fn = f"out/plot-{param_y}-vs-{param_x}-vdw_only.png"
+        plot_fn = "out/plot-{}-vs-{}-vdw_only.png".format(
+            param_y, param_x, run)
+
         logging.info("write plot to: {}".format(plot_fn))
         fig.savefig(plot_fn, bbox_inches='tight')
     return
-
-
 def main():
     cmd_args = parse_command_line()
     setup_logging(cmd_args['verbosity'])
-    plot_data_multi_trace_poly(param_y="Load_(µN)", param_x="Depth_(nm)",
-                               data_paths=cmd_args['input'])
 
+    plot_data_multi_trace_poly(param_y="Load_(µN)",
+                               param_x="Depth_(nm)",
+                               data_paths=cmd_args['input'])
 
 if "__main__" == __name__:
     try:
