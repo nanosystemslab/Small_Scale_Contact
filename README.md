@@ -1,5 +1,7 @@
 # Small_Scale_Contact
 
+### Data DOI: [![Zenodo-Data-DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14422143.svg)](https://doi.org/10.5281/zenodo.14422143)
+
 ## Overview
 **Small_Scale_Contact** is a project developed by the Nano Systems Lab to study and simulate the contact mechanics at a small scale. This repository contains the codebase and associated files for performing various simulations and analyses on nano-scale contact points.
 
@@ -29,6 +31,25 @@ Small_Scale_Contact/
 - **Contact Mechanics Simulation**: Analyze and visualize contact points at nano-scale.
 - **Material Properties**: Customize material properties for different simulations.
 - **Data Export**: Export simulation results in various formats for further analysis.
+
+## Collect Data
+Download the data from [Zenodo](https://zenodo.org/records/14422143) and unzip it into the `data` directory.
+
+### Data Citation
+
+If you use this data, please cite it using the following BibTeX entry:
+```bibtex
+@dataset{nakamura_2024_14422143,
+  author       = {Nakamura, Matthew and
+                  Heyes, Corrisa},
+  title        = {Small Scale Force Dataset},
+  month        = dec,
+  year         = 2024,
+  publisher    = {Zenodo},
+  doi          = {10.5281/zenodo.14422143},
+  url          = {https://doi.org/10.5281/zenodo.14422143}
+}
+```
 
 ## Installation
 ### Collect Repository
@@ -68,12 +89,14 @@ python3 src/plot_model_vdw_and_contact.py -i data/Au_2024-10-24/2024-10-*txt
 ```
 3. **View Results**: Access the output files in the `out` directory and analyze the generated data.
 
-## Results
-1. Results of Adhesion Model
+## Results From Paper
+### Figure 3. Experimental Results vs Adhesion Model
 ![Load vs Depth (vdw only)](out/plot-Load_(µN)-vs-Depth_(nm)-vdw_only.png)
+Graph represents 71 approaches to a nominally flat gold sample. The average detected load on the transducer pre-contact and its standard deviation are represented by a blue line and region, respectively. We compare this experimental data with two versions of the van der Waals adhesion model. The half-space model (w.r.t. Paper eq. 2) assuming perfectly flat, smooth surfaces is shown in pink diamonds. The asperities model with fixed radius R = 65 nm and normally distributed surface heights as a function of RMS roughness $\sigma$ (w.r.t. Paper eq. 4) is shown in purple triangles. This experimental data indicates a distinct error with respect to the pre-contact adhesion model we are attempting to validate.
 
-2. Experimental Results
+### Figure 5. Experimental Results vs Adhesion Model + Contact
 ![Multi Fit Load vs Depth](out/plot-multi_fit_var-Load_(µN)-vs-Depth_(nm).png)
+Experimental approach data from fig. 3 is again represented in blue. A model of asperity contact loading is shown in green stars following [Bhushan1998](https://link.springer.com/article/10.1023/A:1019186601445). The van der Waals approaching contact adhesion model (w.r.t. Paper eq. 4) applied to measured surface asperity heights is shown in yellow circles. Finally, the corrected total interaction load, accounting for the early contact of outlier asperities protruding from the nanoindenter probe, is shown in red squares.
 
 
 ## License
