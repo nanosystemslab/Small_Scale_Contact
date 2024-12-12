@@ -31,12 +31,31 @@ Small_Scale_Contact/
 - **Data Export**: Export simulation results in various formats for further analysis.
 
 ## Installation
-To clone the repository and install dependencies:
+### Collect Repository
+To clone the repository: 
 ```sh
 git clone https://github.com/nanosystemslab/Small_Scale_Contact.git
 cd Small_Scale_Contact
-pip install -r requirements.txt
 ```
+
+### Using pip
+install dependencies using pip:
+```sh
+pip install .
+```
+
+### Using Poetry
+Alternatively, if you prefer using Poetry for dependency management, you can run:
+```sh
+poetry install
+```
+
+## Using a Poetry Shell
+To start a new shell session with your project's dependencies, use the following command:
+```sh
+poetry shell
+```
+This will activate a new shell where all the dependencies specified in your `pyproject.toml` are available.
 
 ## Usage
 1. **Prepare Input Data**: Ensure your input data files are correctly formatted and placed in the `data` directory.
