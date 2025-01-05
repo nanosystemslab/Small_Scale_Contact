@@ -372,7 +372,7 @@ def plot_data_multi_trace_poly(param_y="T", param_x="T", data_paths=None, plot_s
         logging.info(com_model_stats)
 
         ax.plot(uniform_x, combined, label='Total Load', color='red',
-                linestyle='-', marker='s', markevery=10)
+                linestyle='-', marker='s', markevery=5000)
         ax.tick_params(axis='y', labelsize=14)
         ax.set_xlim([xl, xh])
         ax.set_xlabel("Separation Distance ($nm$)", fontsize=14)
