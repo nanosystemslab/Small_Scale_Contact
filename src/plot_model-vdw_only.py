@@ -40,6 +40,8 @@ def parse_command_line():
     parser.add_argument("-i", "--in", dest="input",
                         nargs='+',
                         default=None, required=False, help="path to input")
+    parser.add_argument("--plot_stats", action="store_true", 
+                        help="plot statistics")
     ret = vars(parser.parse_args())
     ret["verbosity"] = max(0, 30 - 10 * ret["verbosity"])
     return ret
@@ -48,7 +50,7 @@ def parse_command_line():
 def load_file(filepath):
     df = pd.read_csv(filepath, encoding='unicode_escape',
                      sep='\t', skiprows=(0, 1, 2))
-    print(df)
+    logging.info(df)
     col = df.columns.tolist()
     new_col = []
     for i in col:
@@ -61,14 +63,6 @@ def load_file(filepath):
     run = run.split("_")[0]
     df.meta.run = run
     return df
-
-
-def load_multi(filepaths):
-    data = []
-    for data_file in filepaths:
-        tran = load_file(data_file)
-        data.append(tran)
-    return data
 
 
 def load_model_files(csv_dir):
@@ -103,7 +97,55 @@ def load_model_files(csv_dir):
     return x_mean, y_mean, y_std
 
 
-def plot_data_multi_trace_poly(param_y="T", param_x="T", data_paths=None):
+def calc_stats(df, exp: str, model:str, plot=False):
+    working_df = df.copy()
+
+    # Calculate Percentage Error
+    working_df['Percentage_Error'] = (
+        (working_df[model] - working_df[exp]).abs()
+        / (working_df[exp])
+    ) * 100
+
+    # Calculate Percentage Difference
+    working_df['Percentage_Difference'] = (
+        (working_df[model] - working_df[exp]).abs()
+        / ((working_df[model] + working_df[exp]) / 2)
+    ) * 100
+
+    # Calculate Root Mean Square Error (RMSE)
+    working_df['Squared_Error'] = (working_df[exp] - working_df[model]) ** 2
+    rmse = (working_df['Squared_Error'].mean()) ** 0.5
+
+    # Calculate Mean Absolute Error (MAE)
+    working_df['Absolute_Error'] = (working_df[model] - working_df[exp]).abs()
+    mae = working_df['Absolute_Error'].mean()
+
+
+    # Add formatted statements
+    result_summary = (
+        f"For comparing {exp} vs {model}:\n"
+        f"Mean Percentage Error: {working_df['Percentage_Error'].mean():.2f}\n"
+        f"Mean Percentage Difference: {working_df['Percentage_Difference'].mean():.2f}\n"
+        f"Root Mean Square Error (RMSE): {rmse:.2f}\n"
+        f"Mean Absolute Error (MAE): {mae:.2f}\n"
+    )
+    if plot:
+        plt.figure(figsize=(10, 6))
+        #plt.scatter(working_df.index, working_df['Squared_Error'],
+        #         label='Squared_Error', color='blue', linewidth=1.5)
+        plt.scatter(working_df.index, working_df['Absolute_Error'],
+                 label='Absolute_Error', color='red', linewidth=1.5)
+        plt.axhline(0, color='gray', linestyle='--', linewidth=0.8, label='Zero Line')
+        plt.title(f'Errors  vs X for {exp} and {model}', fontsize=14)
+        plt.xlabel('X', fontsize=12)
+        plt.ylabel('Error', fontsize=12)
+        plt.legend()
+        plt.grid(True, linestyle='--', alpha=0.7)
+        plt.show()
+    return result_summary
+
+
+def plot_data_multi_trace_poly(param_y="T", param_x="T", data_paths=None, plot_stats=False):
     """
     plot multi data trace from a file with std
 
@@ -121,7 +163,7 @@ def plot_data_multi_trace_poly(param_y="T", param_x="T", data_paths=None):
 
     dfs = []
     for file in data_paths:
-        print(f"loading...{file}")
+        logging.info(f"loading...{file}")
         df = load_file(file)
 
         two_levels_up = os.path.abspath(os.path.join(file, "../../"))
@@ -138,7 +180,7 @@ def plot_data_multi_trace_poly(param_y="T", param_x="T", data_paths=None):
 
         # Print the result
         if found_file_path:
-            print(f"File found: {found_file_path}")
+            logging.info(f"File found: {found_file_path}")
             df_air = load_file(found_file_path)
 
             # Assuming 'Load (µN)' is the column that needs normalization
@@ -150,11 +192,11 @@ def plot_data_multi_trace_poly(param_y="T", param_x="T", data_paths=None):
                 df['Load_(µN)'] = df['Load_(µN)'] - df_air_interpolated['Load_(µN)']
 
                 # Print or save the normalized dataframe
-                print(df.head())  # For testing, you can see the top few rows
+                logging.info(df.head())  # For testing, you can see the top few rows
             else:
-                print("Load (µN) column not found in data files")
+                logging.warning("Load (µN) column not found in data files")
         else:
-            print("File containing the keyword does not exist not normalizing")
+            logging.warning("File containing the keyword does not exist not normalizing")
 
         run = df.meta.run
 
@@ -167,7 +209,7 @@ def plot_data_multi_trace_poly(param_y="T", param_x="T", data_paths=None):
         df.meta = types.SimpleNamespace()
         df.meta.run = run
         df.meta.file = file
-        print(df)
+        logging.info(df)
         dfs.append(df)
 
     figsize = 4  # 12 has been default
@@ -285,7 +327,7 @@ def plot_data_multi_trace_poly(param_y="T", param_x="T", data_paths=None):
 
         # Array setup
         step = -0.1
-        x = np.arange(200, 0-step, step)
+        x = abs(depth)
         W= model(abs(x))
 
         def model_2(x):
@@ -294,7 +336,6 @@ def plot_data_multi_trace_poly(param_y="T", param_x="T", data_paths=None):
             D = 21.456 * 1e-6
             Area = np.pi * (D / 2)**2
 
-            #return -(Ah * Area)/(12*np.pi*x**2)*1e12
             return -(Ah* Area)/(6*np.pi*x**3)*1e6#*1e18
 
         W2 = model_2(abs(x))
@@ -316,7 +357,6 @@ def plot_data_multi_trace_poly(param_y="T", param_x="T", data_paths=None):
         ax.tick_params(axis='y', labelsize=14)
         ax.set_ylabel("Load ($\mu N$)", fontsize=14)
         ax.legend(loc='lower left', fontsize=14)
-        #plt.show()
 
         logging.info(sys._getframe().f_code.co_name)
         plot_fn = "out/plot-{}-vs-{}-vdw_only.png".format(
@@ -324,14 +364,32 @@ def plot_data_multi_trace_poly(param_y="T", param_x="T", data_paths=None):
 
         logging.info("write plot to: {}".format(plot_fn))
         fig.savefig(plot_fn, bbox_inches='tight')
+
+
+        stats_df = pd.DataFrame({
+            'Uniform_X': np.abs(x),
+            'vdw_sigma': W,
+            'vdw_HS': W2,
+            'load_average': load_average
+        })
+
+        stats_df = stats_df.loc[-200:-2]
+
+        vdw_HS_stats = calc_stats(stats_df, exp = "load_average", model = "vdw_HS", plot=plot_stats)
+        vdw_si_stats = calc_stats(stats_df, exp = "load_average", model = "vdw_sigma", plot=plot_stats)
+        logging.info(vdw_HS_stats)
+        logging.info(vdw_si_stats)
     return
+
+
 def main():
     cmd_args = parse_command_line()
     setup_logging(cmd_args['verbosity'])
 
     plot_data_multi_trace_poly(param_y="Load_(µN)",
                                param_x="Depth_(nm)",
-                               data_paths=cmd_args['input'])
+                               data_paths=cmd_args['input'],
+                               plot_stats=cmd_args['plot_stats'])
 
 if "__main__" == __name__:
     try:

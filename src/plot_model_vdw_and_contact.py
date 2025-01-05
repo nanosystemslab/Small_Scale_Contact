@@ -120,24 +120,21 @@ def calc_stats(df, exp: str, model:str, plot=False):
     working_df['Absolute_Error'] = (working_df[model] - working_df[exp]).abs()
     mae = working_df['Absolute_Error'].mean()
 
-    # Add RMSE, MAE, and R² to the DataFrame as metadata
-    working_df['RMSE'] = rmse
-    working_df['MAE'] = mae
-
     # Add formatted statements
     result_summary = (
         f"For comparing {exp} vs {model}:\n"
         f"Mean Percentage Error: {working_df['Percentage_Error'].mean():.2f}\n"
         f"Mean Percentage Difference: {working_df['Percentage_Difference'].mean():.2f}\n"
-        f"Root Mean Square Error (RMSE): {working_df['RMSE'].mean():.2f}\n"
-        f"Mean Absolute Error (MAE): {working_df['MAE'].mean():.2f}\n"
+        f"Root Mean Square Error (RMSE): {rmse:.2f}\n"
+        f"Mean Absolute Error (MAE): {mae:.2f}\n"
+
     )
     if plot:
         plt.figure(figsize=(10, 6))
-        plt.scatter(working_df.index, working_df['Percentage_Difference'],
-                 label='Percentage Difference', color='blue', linewidth=1.5)
-        plt.scatter(working_df.index, working_df['Percentage_Error'],
-                 label='Percentage Error', color='red', linewidth=1.5)
+        #plt.scatter(working_df.index, working_df['Squared_Error'],
+        #         label='Squared_Error', color='blue', linewidth=1.5)
+        plt.scatter(working_df.index, working_df['Absolute_Error'],
+                 label='Absolute_Error', color='red', linewidth=1.5)
         plt.axhline(0, color='gray', linestyle='--', linewidth=0.8, label='Zero Line')
         plt.title(f'Percentage Difference vs X for {exp} and {model}', fontsize=14)
         plt.xlabel('X', fontsize=12)
@@ -336,7 +333,7 @@ def plot_data_multi_trace_poly(param_y="T", param_x="T", data_paths=None, plot_s
         })
         # Get the minimum and maximum index values from combined_df
         min_index_combined = -200
-        max_index_combined =  -12
+        max_index_combined =  -2
 
         # Filter exp_df to keep rows with indices within the range of combined_df
         filtered_exp_df = exp_df[(exp_df.index >= min_index_combined) & (exp_df.index <= max_index_combined)]
